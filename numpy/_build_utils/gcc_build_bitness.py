@@ -1,20 +1,29 @@
-#!python
-""" Detect bitness (32 or 64) of Mingw-w64 gcc build target on Windows.
-"""
+#!/usr/bin/env python3
+"""Detect the bitness (32 or 64) of the MinGW-w64 GCC build target on Windows."""
 
-import re
-from subprocess import run
-
+import subprocess
+import sys
 
 def main():
-    res = run(['gcc', '-v'], check=True, text=True, capture_output=True)
-    target = re.search(r'^Target: (.*)$', res.stderr, flags=re.M).groups()[0]
-    if target.startswith('i686'):
-        print('32')
-    elif target.startswith('x86_64'):
-        print('64')
-    else:
-        raise RuntimeError('Could not detect Mingw-w64 bitness')
+    try:
+        result = subprocess.run(
+            ["gcc", "-dumpmachine"],
+            check=True,
+            text=True,
+            capture_output=True
+        )
+        target = result.stdout.strip()
+
+        if target.startswith("i686"):
+            print("32")
+        elif target.startswith("x86_64"):
+            print("64")
+        else:
+            raise ValueError(f"Unrecognized GCC target: {target}")
+
+    except (subprocess.CalledProcessError, FileNotFoundError) as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
 
 
 if __name__ == "__main__":
